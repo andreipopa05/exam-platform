@@ -1,5 +1,7 @@
 # Exam Platform
 
+[![CI](https://github.com/andreipopa05/exam-platform/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/andreipopa05/exam-platform/actions/workflows/ci.yml)
+
 A command-line exam platform written in Java, similar to a simplified Moodle: it manages exams, questions of three types, students and grading. The platform reads commands from a text file, one command per line, and writes its results into files.
 
 It is a showcase of **object-oriented design** (abstraction, inheritance, polymorphism, encapsulation), **Java collections**, **generics**, **custom exceptions** and **file I/O**.
@@ -150,7 +152,7 @@ Dan Voinea | 16.00
 ## Tests
 
 ```bash
-./gradlew test
+./gradlew test\
 ```
 
 - `QuestionTest`: the grading rules (partial credit limits for each question type).
