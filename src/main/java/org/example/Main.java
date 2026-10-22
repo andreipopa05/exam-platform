@@ -1,12 +1,12 @@
 package org.example;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * read/parse commands
@@ -14,70 +14,58 @@ import java.util.Arrays;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        String filename = "src/main/resources/" + args[0] + "/input.in";
-        String filepath = "src/main/resources/" + args[0] + "/";
-
-        Platform moodle = new Platform();
-
-        try {
-            BufferedReader breader = new BufferedReader(new FileReader(filename));
-
-            String line = breader.readLine();
-
-            if (line == null) {
-                return;
-            }
-
-            while (line != null) {
-                String[] command = line.split(" \\| ");
-
-                if (command[1].equals("create_exam")) {
-                    LocalDateTime start = getTime(command[3]);
-                    LocalDateTime stop = getTime(command[4]);
-
-                    moodle.createExam(command[2], start, stop);
-                } else if (command[1].equals("add_question")) {
-                    LocalDateTime timeOfAddition = getTime(command[0]);
-                    int difficulty = Integer.parseInt(command[5]);
-                    double maxScore = Double.parseDouble(command[6]);
-
-                    moodle.addQuestion(command[2], command[3], command[7], command[4], timeOfAddition, difficulty,
-                            maxScore, command[8]);
-                } else if (command[1].equals("list_questions_history")) {
-                    moodle.listQuestionsHistory(command[2], command[0], filepath);
-                } else if (command[1].equals("print_exam")) {
-                    moodle.printExam(command[2],command[0], filepath);
-                } else if (command[1].equals("register_student")) {
-                    moodle.registerStudent(command[2], command[3]);
-                } else if (command[1].equals("submit_exam")) {
-                    ArrayList<String> answers = new ArrayList<>(Arrays.asList(command).subList(4, command.length));
-                    LocalDateTime timestamp = getTime(command[0]);
-
-                    moodle.submitExam(command[2], command[3], answers, timestamp, filepath, command[0]);
-                } else if (command[1].equals("show_student_score")) {
-                    moodle.showStudentScore(command[2], command[3], command[0], filepath);
-                } else if (command[1].equals("generate_report")) {
-                    moodle.generateExamReport(command[2], command[0],filepath);
-                } else if (command[1].equals("exit")) {
-                    break;
-                }
-
-                line = breader.readLine();
-            }
-
-        } catch (IOException exception) {
-            throw new RuntimeException(exception);
+        if (args.length != 2) {
+            System.err.println("Usage: Main <input_file> <output_directory>");
+            System.exit(1);
         }
 
-        System.out.println(args[0]);
+        Path outputDirectory = Path.of(args[1]);
+
+        // The output directory is created if needed, and console.out starts empty
+        Files.createDirectories(outputDirectory);
+        Files.deleteIfExists(outputDirectory.resolve("console.out"));
+
+        Platform moodle = new Platform(outputDirectory);
+
+        try (BufferedReader reader = Files.newBufferedReader(Path.of(args[0]))) {
+            String line = reader.readLine();
+
+            while (line != null) {
+                if (!line.isBlank()) {
+                    String[] command = line.split(" \\| ");
+
+                    if (command[1].equals("exit")) {
+                        break;
+                    }
+
+                    execute(moodle, command);
+                }
+
+                line = reader.readLine();
+            }
+        }
+    }
+
+    private static void execute(Platform moodle, String[] command) throws IOException {
+        switch (command[1]) {
+            case "create_exam" -> moodle.createExam(command[2], getTime(command[3]), getTime(command[4]));
+            case "add_question" -> moodle.addQuestion(command[2], command[3], command[7], command[4],
+                    getTime(command[0]), Integer.parseInt(command[5]), Double.parseDouble(command[6]), command[8]);
+            case "list_questions_history" -> moodle.listQuestionsHistory(command[2], getTime(command[0]));
+            case "print_exam" -> moodle.printExam(command[2], getTime(command[0]));
+            case "register_student" -> moodle.registerStudent(command[2], command[3]);
+            case "submit_exam" -> {
+                List<String> answers = Arrays.asList(command).subList(4, command.length);
+
+                moodle.submitExam(command[2], command[3], answers, getTime(command[0]));
+            }
+            case "show_student_score" -> moodle.showStudentScore(command[2], command[3], getTime(command[0]));
+            case "generate_report" -> moodle.generateExamReport(command[2], getTime(command[0]));
+            default -> { }
+        }
     }
 
     private static LocalDateTime getTime(String command) {
-        command = command.trim();
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy-HH-mm");
-
-        return LocalDateTime.parse(command, formatter);
+        return LocalDateTime.parse(command.trim(), Platform.TIME_FORMAT);
     }
 }
-

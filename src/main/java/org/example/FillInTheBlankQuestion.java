@@ -2,14 +2,14 @@ package org.example;
 
 import java.time.LocalDateTime;
 
-public class FillInTheBlankQuestion extends Question<String>{
+public class FillInTheBlankQuestion extends Question<String> {
     protected FillInTheBlankQuestion(String text, String author, LocalDateTime timeOfAddition, int difficulty,
                                      double maxScore, String rightAnswer) {
         super(text, author, timeOfAddition, difficulty, maxScore, rightAnswer);
     }
 
     @Override
-    public double scorePercentage(Enum<Correctness> correct) {
+    public double scorePercentage(Correctness correct) {
         if (correct == Correctness.correct) {
             return 1;
         }
@@ -22,7 +22,12 @@ public class FillInTheBlankQuestion extends Question<String>{
     }
 
     @Override
-    public Enum<Correctness> checkAnswer(String input) {
+    protected String parseAnswer(String answer) {
+        return answer;
+    }
+
+    @Override
+    public Correctness checkAnswer(String input) {
         if (input.equals(this.rightAnswer)) {
             return Correctness.correct;
         }

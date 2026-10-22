@@ -1,11 +1,14 @@
 package org.example;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -13,120 +16,103 @@ import java.util.Map;
  */
 
 public class Platform {
-    private final Map <String, Student> students;
-    private final Map <String, Exam> exams;
+    public static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("dd-MM-yyyy-HH-mm");
 
-    public Platform() {
-        students = new HashMap<>();
-        exams = new HashMap<>();
+    private final Path outputDirectory;
+    private final Map<String, Student> students = new HashMap<>();
+    private final Map<String, Exam> exams = new HashMap<>();
+
+    public Platform(Path outputDirectory) {
+        this.outputDirectory = outputDirectory;
     }
 
     public void createExam(String name, LocalDateTime startTime, LocalDateTime endTime) {
-        if (exams.get(name) == null) {
-            Exam exam = new Exam(name, startTime, endTime);
-            exams.put(name, exam);
-        }
+        exams.putIfAbsent(name, new Exam(name, startTime, endTime));
     }
 
-    public void addQuestion(String type, String examName, String text, String author, LocalDateTime timeOfAddition, int difficulty, double maxScore, String rightAnswer) {
-        if (exams.get(examName) == null) {
+    public void addQuestion(String type, String examName, String text, String author, LocalDateTime timeOfAddition,
+                            int difficulty, double maxScore, String rightAnswer) {
+        Exam exam = exams.get(examName);
+
+        if (exam == null) {
             return;
         }
 
-        if (type.equals("open_ended")) {
-            OpenEndedQuestion qst = new OpenEndedQuestion(text, author, timeOfAddition, difficulty, maxScore,
+        Question<?> question = switch (type) {
+            case "open_ended" -> new OpenEndedQuestion(text, author, timeOfAddition, difficulty, maxScore,
                     rightAnswer);
+            case "fill_in_the_blank" -> new FillInTheBlankQuestion(text, author, timeOfAddition, difficulty,
+                    maxScore, rightAnswer);
+            case "multiple_choice" -> new MultipleChoiceQuestion(text, author, timeOfAddition, difficulty,
+                    maxScore, ResponseOption.valueOf(rightAnswer));
+            default -> null;
+        };
 
-            exams.get(examName).addQuestion(qst);
-        } else if (type.equals("fill_in_the_blank")) {
-            FillInTheBlankQuestion qst = new FillInTheBlankQuestion(text, author, timeOfAddition, difficulty, maxScore,
-                    rightAnswer);
-
-            exams.get(examName).addQuestion(qst);
-        } else if (type.equals("multiple_choice")) {
-            ResponseOption resp = null;
-
-            switch (rightAnswer) {
-                case "A" -> resp = ResponseOption.A;
-                case "B" -> resp = ResponseOption.B;
-                case "C" -> resp = ResponseOption.C;
-                case "D" -> resp = ResponseOption.D;
-            }
-
-            MultipleChoiceQuestion qst = new MultipleChoiceQuestion(text, author, timeOfAddition, difficulty, maxScore, resp);
-
-            exams.get(examName).addQuestion(qst);
+        if (question != null) {
+            exam.addQuestion(question);
         }
     }
 
-    public void listQuestionsHistory(String examName, String timestamp, String filepath) throws IOException {
-        String toPrint = exams.get(examName).printQuestions();
+    public void listQuestionsHistory(String examName, LocalDateTime timestamp) throws IOException {
+        String fileName = "questions_history_" + examName + "_" + timestamp.format(TIME_FORMAT) + ".out";
 
-        String filename = filepath +  "questions_history_" + examName + "_" + timestamp + ".out";
-
-        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(filename));
-        bufferedWriter.write(toPrint);
-        bufferedWriter.close();
+        writeFile(fileName, exams.get(examName).printQuestions());
     }
 
-    public void printExam(String examName, String timestamp, String filepath) throws IOException {
-        String toPrint = exams.get(examName).printExam();
+    public void printExam(String examName, LocalDateTime timestamp) throws IOException {
+        String fileName = "print_exam_" + examName + "_" + timestamp.format(TIME_FORMAT) + ".out";
 
-        String filename = filepath + "print_exam_" + examName + "_" + timestamp + ".out";
-
-        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(filename));
-        bufferedWriter.write(toPrint);
-        bufferedWriter.close();
+        writeFile(fileName, exams.get(examName).printExam());
     }
 
     public void registerStudent(String name, String group) {
-        if (students.get(name) == null) {
-            Student student = new Student(name, group);
-
-            students.put(name, student);
-        }
+        students.putIfAbsent(name, new Student(name, group));
     }
 
-    public void showStudentScore(String studentName, String examName, String timestamp, String filepath)
-            throws IOException {
-        if (students.get(studentName) == null || exams.get(examName) == null) {
+    public void showStudentScore(String studentName, String examName, LocalDateTime timestamp) throws IOException {
+        Exam exam = exams.get(examName);
+
+        if (!students.containsKey(studentName) || exam == null) {
             return;
         }
 
-        Double studentScore = exams.get(examName).getStudentScore(studentName);
+        String details = String.format(Locale.US, "%s | The score of %s for exam %s is %.2f",
+                timestamp.format(TIME_FORMAT), studentName, examName, exam.getStudentScore(studentName));
 
-        String details = String.format("%s | The score of %s for exam %s is %.2f", timestamp, studentName, examName, studentScore);
-
-        String filename = filepath + "console.out";
-
-        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(filename, true));
-        bufferedWriter.write(details);
-        bufferedWriter.newLine();
-        bufferedWriter.close();
+        appendToConsole(details);
     }
 
-    public void generateExamReport(String examName, String timestamp,String filepath) throws IOException {
-        exams.get(examName).printStudents(examName, timestamp,filepath);
+    public void generateExamReport(String examName, LocalDateTime timestamp) throws IOException {
+        String fileName = "exam_report_" + examName + "_" + timestamp.format(TIME_FORMAT) + ".out";
+
+        writeFile(fileName, exams.get(examName).printStudents());
     }
 
-    public void submitExam(String examName, String studentName, ArrayList<String> answers, LocalDateTime timestamp,
-                           String filepath, String time) throws IOException {
+    public void submitExam(String examName, String studentName, List<String> answers, LocalDateTime timestamp)
+            throws IOException {
         Student student = students.get(studentName);
         Exam exam = exams.get(examName);
 
         try {
-            exam.submitStudentAnswers(student, answers, timestamp);
+            double score = exam.submitStudentAnswers(studentName, answers, timestamp);
+
+            student.addResult(examName, score);
         } catch (SubmissionOutsideTimeIntervalException exception) {
-            String filename = filepath + "console.out";
-            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(filename, true));
-            String details = time + " | Submission outside of time interval for student " + student.getName();
+            student.addResult(examName, 0.0);
 
-            bufferedWriter.write(details);
-            bufferedWriter.newLine();
-            bufferedWriter.close();
-
-            exam.getStudents().put(student, 0.00);
-            student.getExams().put(exam, 0.00);
+            appendToConsole(exception.getTimestamp().format(TIME_FORMAT)
+                    + " | Submission outside of time interval for student " + student.getName());
         }
+    }
+
+    // Writes a file in the output directory, replacing it if it already exists
+    private void writeFile(String fileName, String content) throws IOException {
+        Files.writeString(outputDirectory.resolve(fileName), content);
+    }
+
+    // Adds a line at the end of console.out
+    private void appendToConsole(String line) throws IOException {
+        Files.writeString(outputDirectory.resolve("console.out"), line + "\n",
+                StandardOpenOption.CREATE, StandardOpenOption.APPEND);
     }
 }

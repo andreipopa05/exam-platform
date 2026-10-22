@@ -1,0 +1,3 @@
+5.0 | A queue follows the ___ principle | 2 | FIFO
+5.0 | What principle does a stack follow? | 2 | last in first out
+10.0 | What is the complexity of binary search? A) O(n) B) O(log n) C) O(n log n) D) O(1) | 3 | B

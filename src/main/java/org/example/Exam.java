@@ -1,188 +1,134 @@
 package org.example;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * is an exam
  */
 
 public class Exam {
+    // Oldest first; questions added at the same time are ordered by author
+    private static final Comparator<Question<?>> HISTORY_ORDER = (a, b) -> {
+        int byTime = a.getTimeOfAddition().compareTo(b.getTimeOfAddition());
+
+        return byTime != 0 ? byTime : a.getAuthor().compareTo(b.getAuthor());
+    };
+
+    // Easiest first; questions with the same difficulty are ordered by text
+    private static final Comparator<Question<?>> PRINT_ORDER = (a, b) -> {
+        int byDifficulty = Integer.compare(a.getDifficulty(), b.getDifficulty());
+
+        return byDifficulty != 0 ? byDifficulty : a.getText().compareTo(b.getText());
+    };
+
     private final String name;
     private final LocalDateTime startTime;
     private final LocalDateTime endTime;
 
-    private List<Question<?>> questions;
-    private Map<Student, Double> students;
+    private final List<Question<?>> questions = new ArrayList<>();
+
+    // The questions in the order in which the exam is printed; it is sorted only
+    // when needed, and discarded when a question is added
+    private List<Question<?>> printOrder;
+
+    // Score of every student that took the exam; the TreeMap keeps the names sorted
+    private final Map<String, Double> scores = new TreeMap<>();
 
     public Exam(String name, LocalDateTime startTime, LocalDateTime endTime) {
         this.name = name;
         this.startTime = startTime;
         this.endTime = endTime;
-        questions = new ArrayList<>();
-        students = new HashMap<>();
     }
 
-    public Map<Student, Double> getStudents() {
-        return students;
-    }
-
-    public LocalDateTime getEndTime() {
-        return this.endTime;
-    }
-
-    public LocalDateTime getStartTime() {
-        return startTime;
-    }
-
-
-    public List<Question<?>> getQuestions() {
-        return questions;
+    public String getName() {
+        return this.name;
     }
 
     public void addQuestion(Question<?> qst) {
         questions.add(qst);
+        printOrder = null;
+    }
+
+    private List<Question<?>> getPrintOrder() {
+        if (printOrder == null) {
+            printOrder = new ArrayList<>(questions);
+            printOrder.sort(PRINT_ORDER);
+        }
+
+        return printOrder;
     }
 
     public String printQuestions() {
-        List <Question<?>> printSortedQuestions = new ArrayList<>(questions);
-
-        printSortedQuestions.sort(new MyComparatorQuestions());
+        List<Question<?>> sortedQuestions = new ArrayList<>(questions);
+        sortedQuestions.sort(HISTORY_ORDER);
 
         StringBuilder details = new StringBuilder();
 
-        for (Question<?> qst : printSortedQuestions) {
-            String time = formatTime(qst.getTimeOfAddition());
-
-            details.append(time).append(" | ").append(qst.getText()).append(" | ").append(qst.getRightAnswer()).append(" | ").append(qst.getDifficulty()).append(" | ").append(qst.getMaxScore()).append(" | ").append(qst.getAuthor());
-            details.append("\n");
+        for (Question<?> qst : sortedQuestions) {
+            details.append(qst.getTimeOfAddition().format(Platform.TIME_FORMAT)).append(" | ")
+                    .append(qst.getText()).append(" | ")
+                    .append(qst.getRightAnswer()).append(" | ")
+                    .append(qst.getDifficulty()).append(" | ")
+                    .append(qst.getMaxScore()).append(" | ")
+                    .append(qst.getAuthor()).append("\n");
         }
 
         return details.toString();
     }
 
     public String printExam() {
-        List<Question<?>> printSortedExam = new ArrayList<>(questions);
-
-        printSortedExam.sort(new MyComparatorExam());
-
-        this.questions = printSortedExam;
-
         StringBuilder details = new StringBuilder();
 
-        for (Question<?> qst : printSortedExam) {
-            details.append(qst.getMaxScore()).append(" | ").append(qst.getText()).append(" | ").append(qst.getDifficulty()).append(" | ").append(qst.getRightAnswer());
-            details.append("\n");
+        for (Question<?> qst : getPrintOrder()) {
+            details.append(qst.getMaxScore()).append(" | ")
+                    .append(qst.getText()).append(" | ")
+                    .append(qst.getDifficulty()).append(" | ")
+                    .append(qst.getRightAnswer()).append("\n");
         }
 
         return details.toString();
     }
 
-    public void printStudents(String examName, String timestamp,String filepath) throws IOException {
-        String filename = filepath + "exam_report_" + examName + "_" + timestamp + ".out";
+    public String printStudents() {
+        StringBuilder details = new StringBuilder();
 
-        BufferedWriter br = new BufferedWriter(new FileWriter(filename));
-
-        TreeMap<Student, Double> sortedStudents = new TreeMap<>(new MyComparatorStudents());
-        sortedStudents.putAll(students);
-
-        for (Map.Entry<Student, Double> entry : sortedStudents.entrySet()) {
-            Student std = entry.getKey();
-            Double scr = entry.getValue();
-
-            String details = String.format("%s | %.2f\n", std.getName(), scr);
-
-            br.write(details);
+        for (Map.Entry<String, Double> entry : scores.entrySet()) {
+            details.append(String.format(Locale.US, "%s | %.2f\n", entry.getKey(), entry.getValue()));
         }
 
-        br.close();
+        return details.toString();
     }
 
-    public Double getStudentScore (String name) {
-        for (Map.Entry<Student, Double> entry : students.entrySet()) {
-            if (entry.getKey().getName().equals(name)) {
-                return entry.getValue();
-            }
+    // The score of a student, or 0 if he/she did not take the exam
+    public double getStudentScore(String studentName) {
+        return scores.getOrDefault(studentName, 0.0);
+    }
+
+    // The answers follow the order in which the exam is printed. A submission outside
+    // the time interval gets the score 0 and throws an exception
+    public double submitStudentAnswers(String studentName, List<String> answers, LocalDateTime timestamp)
+            throws SubmissionOutsideTimeIntervalException {
+        if (timestamp.isBefore(startTime) || timestamp.isAfter(endTime)) {
+            scores.put(studentName, 0.0);
+
+            throw new SubmissionOutsideTimeIntervalException(timestamp);
         }
 
-        return null;
-    }
+        List<Question<?>> orderedQuestions = getPrintOrder();
+        double finalScore = 0.0;
 
-    public void submitStudentAnswers(Student student, ArrayList<String> answers, LocalDateTime timestamp)
-            throws SubmissionOutsideTimeIntervalException, IOException {
-            if (timestamp.isAfter(this.getEndTime()) || timestamp.isBefore(this.getStartTime())) {
-                throw new SubmissionOutsideTimeIntervalException(timestamp.toString());
-            }
-
-        double finalScore = 0.00;
-
-        for (int i = 0; i < this.getQuestions().size(); i++) {
-            if (this.getQuestions().get(i) instanceof MultipleChoiceQuestion qst) {
-                ResponseOption responseOption = null;
-
-                switch (answers.get(i)) {
-                    case "A" -> responseOption = ResponseOption.A;
-                    case "B" -> responseOption = ResponseOption.B;
-                    case "C" -> responseOption = ResponseOption.C;
-                    case "D" -> responseOption = ResponseOption.D;
-                }
-
-                assert responseOption != null;
-                double score = qst.getMaxScore() * qst.scorePercentage(qst.checkAnswer(responseOption));
-
-                finalScore += score;
-            } else if (this.getQuestions().get(i) instanceof OpenEndedQuestion qst) {
-                double score = qst.getMaxScore() * qst.scorePercentage(qst.checkAnswer(answers.get(i)));
-
-                finalScore += score;
-            } else {
-                FillInTheBlankQuestion qst = (FillInTheBlankQuestion) this.getQuestions().get(i);
-                double score = qst.getMaxScore() * qst.scorePercentage(qst.checkAnswer(answers.get(i)));
-
-                finalScore += score;
-            }
+        for (int i = 0; i < orderedQuestions.size(); i++) {
+            finalScore += orderedQuestions.get(i).score(answers.get(i));
         }
 
-        this.getStudents().put(student, finalScore);
-        student.getExams().put(this, finalScore);
-    }
+        scores.put(studentName, finalScore);
 
-    private static String formatTime(LocalDateTime date) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy-HH-mm");
-
-        return date.format(formatter);
-    }
-}
-
-class MyComparatorQuestions implements Comparator<Question<?>> {
-    @Override
-    public int compare(Question o1, Question o2) {
-        if (!o1.getTimeOfAddition().equals(o2.getTimeOfAddition())) {
-            return o1.getTimeOfAddition().compareTo(o2.getTimeOfAddition());
-        }
-
-        return o1.getAuthor().compareTo(o2.getAuthor());
-    }
-}
-
-class MyComparatorExam implements Comparator<Question<?>> {
-    @Override
-    public int compare(Question<?> o1, Question<?> o2) {
-        if (o1.getDifficulty() != o2.getDifficulty()) {
-            return Integer.compare(o1.getDifficulty(), o2.getDifficulty());
-        }
-
-        return o1.getText().compareTo(o2.getText());
-    }
-}
-
-class MyComparatorStudents implements Comparator<Student> {
-    @Override
-    public int compare(Student o1, Student o2) {
-        return o1.getName().compareTo(o2.getName());
+        return finalScore;
     }
 }

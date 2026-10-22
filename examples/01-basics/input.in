@@ -1,0 +1,19 @@
+01-01-2025-09-00 | create_exam | Algorithms | 01-01-2025-10-00 | 01-01-2025-12-00
+01-01-2025-09-05 | add_question | multiple_choice | Algorithms | Prof Ionescu | 3 | 10 | What is the complexity of binary search? A) O(n) B) O(log n) C) O(n log n) D) O(1) | B
+01-01-2025-09-06 | add_question | open_ended | Algorithms | Prof Ionescu | 2 | 5 | What principle does a stack follow? | last in first out
+01-01-2025-09-06 | add_question | fill_in_the_blank | Algorithms | Prof Dumitru | 2 | 5 | A queue follows the ___ principle | FIFO
+01-01-2025-09-10 | list_questions_history | Algorithms
+01-01-2025-09-15 | print_exam | Algorithms
+01-01-2025-09-20 | register_student | Ana Popescu | 321CB
+01-01-2025-09-20 | register_student | Bogdan Radu | 322CA
+01-01-2025-09-20 | register_student | Carmen Ilie | 323AB
+01-01-2025-09-20 | register_student | Dan Voinea | 324CC
+01-01-2025-10-30 | submit_exam | Algorithms | Ana Popescu | FIFO | last in first out | B
+01-01-2025-10-45 | submit_exam | Algorithms | Bogdan Radu | FIF | last in | A
+01-01-2025-10-46 | submit_exam | Algorithms | Dan Voinea | FIFOS | the last in first out | B
+01-01-2025-10-50 | show_student_score | Ana Popescu | Algorithms
+01-01-2025-11-00 | generate_report | Algorithms
+01-01-2025-12-30 | submit_exam | Algorithms | Carmen Ilie | FIFO | last in first out | B
+01-01-2025-12-35 | show_student_score | Carmen Ilie | Algorithms
+01-01-2025-12-40 | generate_report | Algorithms
+01-01-2025-12-45 | exit

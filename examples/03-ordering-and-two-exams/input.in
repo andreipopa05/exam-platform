@@ -1,0 +1,25 @@
+10-03-2025-07-00 | create_exam | Math | 10-03-2025-09-00 | 10-03-2025-11-00
+10-03-2025-07-01 | create_exam | Physics | 10-03-2025-10-00 | 10-03-2025-12-00
+10-03-2025-07-55 | add_question | fill_in_the_blank | Math | Mircea Dan | 5 | 2.5 | The sum of angles in a triangle is ___ degrees | 180
+10-03-2025-08-00 | add_question | open_ended | Math | Zoe Pop | 2 | 4 | Name the derivative of x squared | 2x
+10-03-2025-08-00 | add_question | multiple_choice | Math | Ana Ban | 2 | 4 | Is 7 prime? A) yes B) no C) maybe D) unknown | A
+10-03-2025-08-01 | add_question | multiple_choice | Physics | Ana Ban | 1 | 3 | Unit of force? A) Joule B) Newton C) Watt D) Pascal | B
+10-03-2025-08-01 | add_question | open_ended | Physics | Ana Ban | 1 | 3 | Name the unit of energy | joule
+10-03-2025-08-30 | list_questions_history | Math
+10-03-2025-08-31 | print_exam | Math
+10-03-2025-08-32 | print_exam | Physics
+10-03-2025-08-40 | register_student | Zoe Pop | 331AA
+10-03-2025-08-40 | register_student | Ana Ban | 332BB
+10-03-2025-08-41 | register_student | Mihai Rus | 333CC
+10-03-2025-09-30 | submit_exam | Math | Zoe Pop | A | 2x | 18
+10-03-2025-09-31 | generate_report | Math
+10-03-2025-09-40 | submit_exam | Physics | Zoe Pop | joule | B
+10-03-2025-09-50 | submit_exam | Math | Ana Ban | B | x | 180
+10-03-2025-10-30 | submit_exam | Physics | Mihai Rus | joules | A
+10-03-2025-10-31 | submit_exam | Math | Mihai Rus | A | 2x | 180
+10-03-2025-10-45 | show_student_score | Zoe Pop | Physics
+10-03-2025-10-46 | show_student_score | Zoe Pop | Math
+10-03-2025-10-47 | show_student_score | Mihai Rus | Math
+10-03-2025-10-50 | generate_report | Math
+10-03-2025-10-51 | generate_report | Physics
+10-03-2025-10-55 | exit

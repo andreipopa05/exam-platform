@@ -1,0 +1,10 @@
+02-02-2025-08-00 | create_exam | Networks | 02-02-2025-09-00 | 02-02-2025-11-00
+02-02-2025-08-01 | add_question | multiple_choice | Networks | Prof Marin | 3 | 6 | Which layer routes packets? A) Link B) Network C) Transport D) Application | B
+02-02-2025-08-02 | add_question | fill_in_the_blank | Networks | Prof Marin | 2 | 4 | TCP stands for Transmission Control ___ | Protocol
+02-02-2025-08-10 | print_exam | Networks
+02-02-2025-08-12 | register_student | Elena Stan | 321CB
+02-02-2025-08-15 | add_question | open_ended | Networks | Prof Marin | 1 | 10 | Explain what DNS does. | translates names to IP addresses
+02-02-2025-09-30 | submit_exam | Networks | Elena Stan | translates names to IP addresses | Protocol | B
+02-02-2025-09-35 | show_student_score | Elena Stan | Networks
+02-02-2025-09-40 | generate_report | Networks
+02-02-2025-09-45 | exit
