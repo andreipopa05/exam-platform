@@ -1,4 +1,4 @@
-package org.example;
+package examplatform;
 
 /**
  * defines the behavior of entities that can be graded

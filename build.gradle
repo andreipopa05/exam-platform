@@ -3,7 +3,7 @@ plugins {
     id "application"
 }
 
-group = "org.example"
+group = "examplatform"
 version = "1.0-SNAPSHOT"
 
 java {
@@ -21,7 +21,7 @@ dependencies {
 }
 
 application {
-    mainClass = "org.example.Main"
+    mainClass = "examplatform.Main"
 }
 
 test {

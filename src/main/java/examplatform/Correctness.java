@@ -1,4 +1,4 @@
-package org.example;
+package examplatform;
 
 /**
  * an enumeration describing the degree of correctness of an answer

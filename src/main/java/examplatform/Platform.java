@@ -1,4 +1,4 @@
-package org.example;
+package examplatform;
 
 import java.io.IOException;
 import java.nio.file.Files;
